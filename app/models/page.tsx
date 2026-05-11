@@ -47,20 +47,23 @@ export default function ArchitecturePage() {
   }, [phase, chars, sample.prompt.length]);
 
   return (
-    <main style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <main style={{ position: 'relative', width: '100%', height: '100%', background: '#080808' }}>
       <SiteNav />
 
-      {/* Spline background */}
+      {/* Spline background — sits behind everything */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
-        <Spline scene="https://prod.spline.design/oZgVPSMtvgTBGXv2/scene.splinecode" />
+        <Spline
+          scene="https://prod.spline.design/oZgVPSMtvgTBGXv2/scene.splinecode"
+          style={{ width: '100%', height: '100%' }}
+        />
       </div>
 
-      {/* Dark gradient so left-side text is always readable */}
+      {/* Left-side readability gradient — fades out before centre so Spline stays visible */}
       <div style={{
         position: 'absolute',
         inset: 0,
         zIndex: 3,
-        background: 'linear-gradient(100deg, rgba(8,8,8,0.92) 42%, rgba(8,8,8,0.3) 70%, transparent 100%)',
+        background: 'linear-gradient(95deg, rgba(8,8,8,0.88) 30%, rgba(8,8,8,0.45) 52%, rgba(8,8,8,0.0) 68%)',
         pointerEvents: 'none',
       }} />
 
