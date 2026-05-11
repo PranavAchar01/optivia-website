@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Spline from '@splinetool/react-spline';
+import dynamic from 'next/dynamic';
 import SiteNav from '@/components/SiteNav';
+
+const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false });
 
 const SAMPLES = [
   { prompt: 'Summarize this paragraph in one sentence.', tier: 'Haiku',  badge: '#4ade80', desc: 'Fast · $0.00025 / 1k tokens' },
