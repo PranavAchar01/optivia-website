@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Spline from '@splinetool/react-spline/next';
+import Spline from '@splinetool/react-spline';
 import SiteNav from '@/components/SiteNav';
 
 const SAMPLES = [
