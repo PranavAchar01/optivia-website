@@ -1,22 +1,13 @@
+import Spline from '@splinetool/react-spline/next';
 import SiteNav from '@/components/SiteNav';
 
 export default function ArchitecturePage() {
   return (
     <main style={{ position: 'relative', width: '100%', height: '100%' }}>
       <SiteNav />
-      {/* Grid + radial glow background */}
-      <div style={{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 2,
-        background: [
-          'linear-gradient(rgba(0,160,174,0.045) 1px, transparent 1px)',
-          'linear-gradient(90deg, rgba(0,160,174,0.045) 1px, transparent 1px)',
-          'radial-gradient(ellipse 65% 55% at 68% 105%, rgba(0,160,174,0.18) 0%, transparent 65%)',
-          '#080808',
-        ].join(', '),
-        backgroundSize: '48px 48px, 48px 48px, 100% 100%, 100% 100%',
-      }} />
+      <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
+        <Spline scene="https://prod.spline.design/oZgVPSMtvgTBGXv2/scene.splinecode" />
+      </div>
 
       <div style={{
         position: 'absolute',
