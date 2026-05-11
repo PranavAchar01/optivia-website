@@ -48,17 +48,12 @@ export default function ArchitecturePage() {
 
   return (
     <main style={{ position: 'relative', width: '100%', height: '100%', background: '#080808' }}>
+      {/* Spline renders inline first — same pattern as homepage so canvas fills main */}
+      <Spline scene="https://prod.spline.design/oZgVPSMtvgTBGXv2/scene.splinecode" />
+
       <SiteNav />
 
-      {/* Spline background — sits behind everything */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
-        <Spline
-          scene="https://prod.spline.design/oZgVPSMtvgTBGXv2/scene.splinecode"
-          style={{ width: '100%', height: '100%' }}
-        />
-      </div>
-
-      {/* Left-side readability gradient — fades out before centre so Spline stays visible */}
+      {/* Left-side readability gradient */}
       <div style={{
         position: 'absolute',
         inset: 0,
