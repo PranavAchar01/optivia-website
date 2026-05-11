@@ -1,5 +1,4 @@
 import Spline from '@splinetool/react-spline/next';
-import ArchitectureCards from '@/components/ArchitectureCards';
 import RippleBackground from '@/components/RippleBackground';
 import SiteNav from '@/components/SiteNav';
 
@@ -54,10 +53,6 @@ export default function ArchitecturePage() {
           </h1>
         </div>
 
-        {/* Cards — client component for 3D interaction */}
-        <div style={{ pointerEvents: 'auto' }}>
-          <ArchitectureCards />
-        </div>
 
       </div>
     </main>
