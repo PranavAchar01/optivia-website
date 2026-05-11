@@ -19,18 +19,6 @@ export default function Home() {
         padding: '18% 4%',
         pointerEvents: 'none',
       }}>
-        <p style={{
-          fontSize: '0.75rem',
-          fontWeight: 400,
-          letterSpacing: '0.15em',
-          textTransform: 'uppercase',
-          color: '#00A0AE',
-          marginBottom: '1.25rem',
-          fontFamily: 'var(--font-fraunces)',
-        }}>
-          Intelligent Routing · Claude Code
-        </p>
-
         <h1 style={{
           fontSize: 'clamp(1.8rem, 3vw, 3.25rem)',
           fontWeight: 800,

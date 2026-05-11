@@ -27,29 +27,15 @@ export default function ArchitecturePage() {
 
         {/* Headline */}
         <div>
-          <p style={{
-            fontFamily: 'var(--font-fraunces)',
-            fontStyle: 'italic',
-            fontWeight: 400,
-            fontSize: '0.75rem',
-            color: '#00A0AE',
-            letterSpacing: '0.05em',
-            marginBottom: '0.6rem',
-          }}>
-            How Optivia works
-          </p>
           <h1 style={{
-            fontFamily: 'var(--font-fraunces)',
-            fontWeight: 700,
+            fontFamily: 'var(--font-syne)',
+            fontWeight: 800,
             fontSize: 'clamp(1.8rem, 2.6vw, 2.8rem)',
             lineHeight: 1.15,
             letterSpacing: '-0.02em',
             color: '#ffffff',
           }}>
-            The right model,{' '}
-            <span style={{ fontStyle: 'italic', fontWeight: 400, color: 'rgba(255,255,255,0.45)' }}>
-              every single time.
-            </span>
+            The right model for every request.
           </h1>
         </div>
 
