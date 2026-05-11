@@ -186,6 +186,16 @@ main {
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.35; }
+  50%       { opacity: 0.65; }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
