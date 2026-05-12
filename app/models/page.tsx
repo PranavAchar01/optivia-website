@@ -124,40 +124,43 @@ export default function ArchitecturePage() {
 
   const sample = SAMPLES[idx];
 
-  // clear all pending timers
-  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = []; };
-
   // reset on new sample
   useEffect(() => {
-    clearTimers();
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
     setChars(0);
     setTyping(true);
     setReveal(0);
   }, [idx]);
 
-  // typing effect
+  // effect 1: typing — increments chars, then flips typing→false
   useEffect(() => {
     if (!typing) return;
     if (chars < sample.prompt.length) {
       const t = setTimeout(() => setChars(c => c + 1), 26);
       return () => clearTimeout(t);
     }
-    // done typing — schedule line reveals
     setTyping(false);
+  }, [typing, chars, sample.prompt.length]);
+
+  // effect 2: once typing is done, schedule reveals (separate so cleanup doesn't cancel them)
+  useEffect(() => {
+    if (typing) return;
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
     let acc = 0;
     sample.lines.forEach((line, i) => {
       acc += line.delay;
       const t = setTimeout(() => setReveal(i + 1), acc);
       timers.current.push(t);
     });
-    // advance to next sample after all lines + hold
     const holdT = setTimeout(
       () => setIdx(n => (n + 1) % SAMPLES.length),
       acc + sample.holdMs,
     );
     timers.current.push(holdT);
-    return clearTimers;
-  }, [typing, chars, sample]);
+    return () => { timers.current.forEach(clearTimeout); timers.current = []; };
+  }, [typing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleLines = sample.lines.slice(0, reveal);
   const lastLabel    = visibleLines.at(-1)?.label ?? '';
