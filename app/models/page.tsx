@@ -64,15 +64,14 @@ export default function ArchitecturePage() {
         pointerEvents: 'none',
       }} />
 
-      {/* Content — full width, pinned to top */}
+      {/* Content — full height column, heading at top, row at bottom */}
       <div style={{
         position: 'absolute',
         inset: 0,
         zIndex: 10,
         display: 'flex',
         flexDirection: 'column',
-        padding: '80px 4% 0 4%',
-        gap: '1.25rem',
+        padding: '80px 4% 4% 4%',
         pointerEvents: 'none',
       }}>
 
@@ -90,10 +89,10 @@ export default function ArchitecturePage() {
         </h1>
 
         {/* Hairline divider */}
-        <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', width: '100%' }} />
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', width: '100%', marginTop: '1rem' }} />
 
-        {/* Subtitle + terminal + legend in a row below */}
-        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start' }}>
+        {/* Subtitle + terminal + legend — pushed to bottom */}
+        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start', marginTop: 'auto' }}>
           <p style={{
             fontFamily: 'var(--font-fraunces)',
             fontWeight: 300,
