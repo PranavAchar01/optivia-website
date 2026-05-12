@@ -55,57 +55,55 @@ export default function ArchitecturePage() {
 
       <SiteNav />
 
-      {/* Gradient — wider fade to cover expanded content area */}
+      {/* Bottom gradient so lower content stays readable over Spline */}
       <div style={{
         position: 'absolute',
         inset: 0,
         zIndex: 3,
-        background: 'linear-gradient(95deg, rgba(8,8,8,0.92) 38%, rgba(8,8,8,0.55) 58%, rgba(8,8,8,0.0) 75%)',
+        background: 'linear-gradient(180deg, rgba(8,8,8,0.82) 0%, rgba(8,8,8,0.7) 18%, rgba(8,8,8,0.0) 45%)',
         pointerEvents: 'none',
       }} />
 
-      {/* Content */}
+      {/* Content — full width, pinned to top */}
       <div style={{
         position: 'absolute',
         inset: 0,
         zIndex: 10,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
-        padding: '72px 5% 5% 5%',
-        maxWidth: '52vw',
-        gap: '2.5rem',
+        padding: '72px 5% 0 5%',
+        gap: '1.5rem',
         pointerEvents: 'none',
       }}>
 
-        {/* Heading */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <h1 style={{
-            fontFamily: 'var(--font-syne)',
-            fontWeight: 800,
-            fontSize: 'clamp(2.2rem, 3.6vw, 4rem)',
-            lineHeight: 1.05,
-            letterSpacing: '-0.03em',
-            color: '#ffffff',
-            margin: 0,
-          }}>
-            The right model<br />for every request.
-          </h1>
+        {/* Full-width horizontal heading */}
+        <h1 style={{
+          fontFamily: 'var(--font-syne)',
+          fontWeight: 800,
+          fontSize: 'clamp(2rem, 3.8vw, 4.2rem)',
+          lineHeight: 1.05,
+          letterSpacing: '-0.03em',
+          color: '#ffffff',
+          margin: 0,
+          whiteSpace: 'nowrap',
+        }}>
+          The right model for every request.
+        </h1>
+
+        {/* Subtitle + terminal + legend in a row below */}
+        <div style={{ display: 'flex', gap: '3rem', alignItems: 'flex-start' }}>
           <p style={{
             fontFamily: 'var(--font-fraunces)',
             fontWeight: 300,
-            fontSize: 'clamp(0.85rem, 1vw, 0.95rem)',
+            fontSize: 'clamp(0.8rem, 0.95vw, 0.9rem)',
             color: 'rgba(255,255,255,0.45)',
             lineHeight: 1.7,
             margin: 0,
-            maxWidth: '44ch',
+            maxWidth: '28ch',
+            flexShrink: 0,
           }}>
             Optivia inspects each prompt and routes it to Haiku, Sonnet, or Opus — cutting cost without touching quality.
           </p>
-        </div>
-
-        {/* Terminal + legend */}
-        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start' }}>
 
           {/* Live routing terminal */}
           <div style={{
@@ -194,7 +192,7 @@ export default function ArchitecturePage() {
             ))}
           </div>
 
-        </div>
+        </div> {/* end subtitle+terminal+legend row */}
       </div>
     </main>
   );
