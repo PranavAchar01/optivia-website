@@ -71,35 +71,37 @@ export default function ArchitecturePage() {
         zIndex: 10,
         display: 'flex',
         flexDirection: 'column',
-        padding: '72px 5% 0 5%',
-        gap: '1.5rem',
+        padding: '80px 4% 0 4%',
+        gap: '1.25rem',
         pointerEvents: 'none',
       }}>
 
-        {/* Full-width horizontal heading */}
+        {/* Full-width heading — sized to sit on one line */}
         <h1 style={{
           fontFamily: 'var(--font-syne)',
           fontWeight: 800,
-          fontSize: 'clamp(2rem, 3.8vw, 4.2rem)',
-          lineHeight: 1.05,
+          fontSize: '3.8vw',
+          lineHeight: 1.0,
           letterSpacing: '-0.03em',
           color: '#ffffff',
           margin: 0,
-          whiteSpace: 'nowrap',
         }}>
           The right model for every request.
         </h1>
 
+        {/* Hairline divider */}
+        <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', width: '100%' }} />
+
         {/* Subtitle + terminal + legend in a row below */}
-        <div style={{ display: 'flex', gap: '3rem', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start' }}>
           <p style={{
             fontFamily: 'var(--font-fraunces)',
             fontWeight: 300,
-            fontSize: 'clamp(0.8rem, 0.95vw, 0.9rem)',
-            color: 'rgba(255,255,255,0.45)',
+            fontSize: '0.875rem',
+            color: 'rgba(255,255,255,0.4)',
             lineHeight: 1.7,
             margin: 0,
-            maxWidth: '28ch',
+            maxWidth: '26ch',
             flexShrink: 0,
           }}>
             Optivia inspects each prompt and routes it to Haiku, Sonnet, or Opus — cutting cost without touching quality.
