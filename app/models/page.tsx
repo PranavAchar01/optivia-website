@@ -91,8 +91,8 @@ export default function ArchitecturePage() {
         {/* Hairline divider */}
         <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', width: '100%', marginTop: '1rem' }} />
 
-        {/* Subtitle + terminal + legend — pushed to bottom */}
-        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start', marginTop: 'auto' }}>
+        {/* Subtitle + terminal + legend */}
+        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start', marginTop: '2rem' }}>
           <p style={{
             fontFamily: 'var(--font-fraunces)',
             fontWeight: 300,
