@@ -64,48 +64,48 @@ export default function ArchitecturePage() {
         pointerEvents: 'none',
       }} />
 
-      {/* Content — full height, two-zone layout */}
+      {/* Content */}
       <div style={{
         position: 'absolute',
         inset: 0,
         zIndex: 10,
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '0 5% 4% 5%',
-        paddingTop: '72px',
-        maxWidth: '58vw',
+        justifyContent: 'center',
+        padding: '72px 5% 5% 5%',
+        maxWidth: '52vw',
+        gap: '2.5rem',
         pointerEvents: 'none',
       }}>
 
-        {/* Top: giant heading */}
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', flex: 1, gap: '1.5rem', paddingTop: '3%' }}>
+        {/* Heading */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <h1 style={{
             fontFamily: 'var(--font-syne)',
             fontWeight: 800,
-            fontSize: 'clamp(3.5rem, 6.5vw, 7rem)',
-            lineHeight: 0.95,
-            letterSpacing: '-0.04em',
+            fontSize: 'clamp(2.2rem, 3.6vw, 4rem)',
+            lineHeight: 1.05,
+            letterSpacing: '-0.03em',
             color: '#ffffff',
             margin: 0,
           }}>
-            The right model for every request.
+            The right model<br />for every request.
           </h1>
           <p style={{
             fontFamily: 'var(--font-fraunces)',
             fontWeight: 300,
-            fontSize: 'clamp(0.9rem, 1.1vw, 1.05rem)',
-            color: 'rgba(255,255,255,0.5)',
-            lineHeight: 1.65,
+            fontSize: 'clamp(0.85rem, 1vw, 0.95rem)',
+            color: 'rgba(255,255,255,0.45)',
+            lineHeight: 1.7,
             margin: 0,
-            maxWidth: '48ch',
+            maxWidth: '44ch',
           }}>
             Optivia inspects each prompt and routes it to Haiku, Sonnet, or Opus — cutting cost without touching quality.
           </p>
         </div>
 
-        {/* Bottom: terminal + legend side by side */}
-        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-end' }}>
+        {/* Terminal + legend */}
+        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start' }}>
 
           {/* Live routing terminal */}
           <div style={{
