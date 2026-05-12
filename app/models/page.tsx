@@ -1,155 +1,166 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import SiteNav from '@/components/SiteNav';
 
 const Spline = dynamic(() => import('@splinetool/react-spline'), { ssr: false });
 
-type Sample = {
-  prompt: string;
-  model: 'Haiku' | 'Sonnet' | 'Opus';
-  modelBadge: string;
-  mode: 'Standard' | 'Thinking';
-  modeBadge: string;
-  agents?: { role: string; desc: string }[];
+// ─── types ────────────────────────────────────────────────────────────────────
+
+type OutputLine = {
+  label: string;
+  value: string;
+  valueColor?: string;       // colour the whole value
+  highlight?: string;        // substring to highlight in teal
+  indent?: boolean;          // ↳ sub-line
+  pulse?: boolean;           // animated "···" suffix while it's the last line
+  delay: number;             // ms after previous line appears
 };
 
+type Sample = {
+  prompt: string;
+  lines: OutputLine[];
+  holdMs: number;
+};
+
+// ─── samples — every scenario maps directly to the LangGraph node sequence ────
+
 const SAMPLES: Sample[] = [
+  // 1. TRIVIAL → Haiku 4.5  (no clarify, fastest path)
   {
-    prompt: 'What is the capital of France?',
-    model: 'Haiku', modelBadge: '#4ade80',
-    mode: 'Standard', modeBadge: '#60a5fa',
-  },
-  {
-    prompt: 'Refactor this React component for readability.',
-    model: 'Sonnet', modelBadge: '#00A0AE',
-    mode: 'Standard', modeBadge: '#60a5fa',
-  },
-  {
-    prompt: 'Design a fault-tolerant distributed cache.',
-    model: 'Opus', modelBadge: '#a78bfa',
-    mode: 'Thinking', modeBadge: '#f59e0b',
-    agents: [
-      { role: 'architect',    desc: 'system design & consistency trade-offs' },
-      { role: 'critic',       desc: 'failure mode & edge case analysis' },
-      { role: 'synthesizer',  desc: 'final implementation plan' },
+    prompt: 'Rename variable \'x\' to \'itemCount\' throughout this file.',
+    holdMs: 2200,
+    lines: [
+      { label: 'cache_lookup',  value: 'miss',                                           delay: 420  },
+      { label: 'fast_intent',   value: 'TRIVIAL · conf 0.96',   highlight: 'TRIVIAL',   delay: 340  },
+      { label: 'classify',      value: 'complexity 0.06 · risk 0.02 · scope 0.14',       delay: 480  },
+      { label: 'clarify',       value: 'skip — ambiguity 0.19 < 0.60',                   delay: 280  },
+      { label: 'synthesize',    value: '124 tokens · preamble cached',                   delay: 520  },
+      { label: 'route',         value: 'Haiku 4.5 · complexity 0.06 < 0.30',  highlight: 'Haiku 4.5', valueColor: '#4ade80', delay: 320 },
+      { label: 'dispatch',      value: 'executing via Claude Code···', pulse: true,       delay: 280  },
     ],
   },
+
+  // 2. CACHE HIT — short-circuit, no classification needed
   {
-    prompt: 'List the top 5 Python web frameworks.',
-    model: 'Haiku', modelBadge: '#4ade80',
-    mode: 'Standard', modeBadge: '#60a5fa',
-  },
-  {
-    prompt: 'Architect a self-healing microservice mesh.',
-    model: 'Opus', modelBadge: '#a78bfa',
-    mode: 'Thinking', modeBadge: '#f59e0b',
-    agents: [
-      { role: 'planner',     desc: 'topology & service orchestration' },
-      { role: 'resilience',  desc: 'fault detection & recovery loops' },
-      { role: 'reviewer',    desc: 'security & observability audit' },
-      { role: 'synthesizer', desc: 'final architecture spec' },
+    prompt: 'What does the --no-verify flag skip in git commit?',
+    holdMs: 2000,
+    lines: [
+      { label: 'cache_lookup',  value: 'HIT · similarity 0.97', valueColor: '#4ade80',  delay: 350  },
+      { label: 'replay',        value: 'cached master prompt + routing decision',         delay: 280  },
+      { label: 'route',         value: 'Haiku 4.5 · from cache', highlight: 'Haiku 4.5', valueColor: '#4ade80', delay: 240 },
+      { label: 'dispatch',      value: 'executing via Claude Code···', pulse: true,       delay: 260  },
     ],
   },
+
+  // 3. DEBUG → Sonnet 4.6  (mid-complexity, no clarify)
   {
-    prompt: 'Write unit tests for the auth module.',
-    model: 'Sonnet', modelBadge: '#00A0AE',
-    mode: 'Standard', modeBadge: '#60a5fa',
+    prompt: 'Fix the race condition in my Express auth middleware.',
+    holdMs: 2400,
+    lines: [
+      { label: 'cache_lookup',  value: 'miss',                                                    delay: 400 },
+      { label: 'fast_intent',   value: 'DEBUG · conf 0.89',       highlight: 'DEBUG',             delay: 360 },
+      { label: 'classify',      value: 'complexity 0.54 · risk 0.63 · scope 0.41',                delay: 500 },
+      { label: 'clarify',       value: 'skip — ambiguity 0.38 < 0.60',                            delay: 270 },
+      { label: 'synthesize',    value: '891 tokens · preamble cached',                            delay: 560 },
+      { label: 'route',         value: 'Sonnet 4.6 · complexity in [0.30, 0.70)', highlight: 'Sonnet 4.6', valueColor: '#00A0AE', delay: 320 },
+      { label: 'dispatch',      value: 'executing via Claude Code···', pulse: true,                delay: 280 },
+    ],
+  },
+
+  // 4. NEW_CODE → Opus 4.6 + clarifications + extended thinking
+  {
+    prompt: 'Build a distributed rate limiter with Redis and Lua scripting.',
+    holdMs: 3000,
+    lines: [
+      { label: 'cache_lookup',  value: 'miss',                                                    delay: 400 },
+      { label: 'fast_intent',   value: 'NEW_CODE · conf 0.82',    highlight: 'NEW_CODE',          delay: 360 },
+      { label: 'classify',      value: 'complexity 0.84 · risk 0.72 · ambiguity 0.71',            delay: 520 },
+      { label: 'clarify',       value: 'ambiguity 0.71 ≥ 0.60 — generating questions···', pulse: true, delay: 310 },
+      { label: '?',             value: 'Consistency model: strong or eventual?', indent: true,    delay: 820 },
+      { label: '?',             value: 'Target RPS and p99 latency budget?',     indent: true,    delay: 420 },
+      { label: 'synthesize',    value: '1,247 tokens · preamble cached',                          delay: 640 },
+      { label: 'route',         value: 'Opus 4.6 · complexity 0.84 ≥ 0.70', highlight: 'Opus 4.6', valueColor: '#a78bfa', delay: 340 },
+      { label: 'thinking',      value: 'extended reasoning enabled', valueColor: '#f59e0b',        delay: 280 },
+      { label: 'dispatch',      value: 'executing via Claude Code···', pulse: true,                delay: 280 },
+    ],
+  },
+
+  // 5. LONG → Opus 4.6 + clarify + thinking + subagent decomposition
+  {
+    prompt: 'Migrate the entire payments API from REST to GraphQL.',
+    holdMs: 3400,
+    lines: [
+      { label: 'cache_lookup',  value: 'miss',                                                           delay: 400 },
+      { label: 'fast_intent',   value: 'LONG · conf 0.77',            highlight: 'LONG',                delay: 360 },
+      { label: 'classify',      value: 'complexity 0.91 · risk 0.85 · scope 0.94 · dependency 0.88',    delay: 540 },
+      { label: 'clarify',       value: 'scope 0.94 ≥ 0.70 — generating questions···', pulse: true,      delay: 310 },
+      { label: '?',             value: 'Which services are in scope: payments only or auth + notifications?', indent: true, delay: 880 },
+      { label: 'synthesize',    value: '2,104 tokens · preamble cached',                                 delay: 680 },
+      { label: 'route',         value: 'Opus 4.6 · complexity 0.91 + risk 0.85', highlight: 'Opus 4.6', valueColor: '#a78bfa', delay: 340 },
+      { label: 'thinking',      value: 'extended reasoning enabled', valueColor: '#f59e0b',               delay: 260 },
+      { label: 'subagents',     value: 'scope 0.94 → decomposing into 4 agents···', pulse: true,         delay: 320 },
+      { label: '↳',             value: 'planner        dependency graph & migration topology', indent: true, delay: 500 },
+      { label: '↳',             value: 'schema-builder  GraphQL schema + resolver generation', indent: true, delay: 380 },
+      { label: '↳',             value: 'verifier        integration test coverage',            indent: true, delay: 380 },
+      { label: '↳',             value: 'synthesizer     final diff + migration runbook',       indent: true, delay: 380 },
+      { label: 'dispatch',      value: 'executing via Claude Code···', pulse: true,                       delay: 300 },
+    ],
   },
 ];
 
-type Phase = 'typing' | 'analyzing' | 'model' | 'mode' | 'fleet' | 'agents' | 'done';
+// ─── component ────────────────────────────────────────────────────────────────
 
 const MONO: React.CSSProperties = { fontFamily: 'var(--font-geist-mono)' };
-
-function Badge({ color, children }: { color: string; children: string }) {
-  return (
-    <span style={{
-      background: color, color: '#000',
-      fontFamily: 'var(--font-syne)', fontWeight: 700,
-      fontSize: '0.7rem', letterSpacing: '0.06em',
-      padding: '0.18rem 0.6rem', borderRadius: '4px',
-      display: 'inline-block',
-    }}>{children}</span>
-  );
-}
-
-function Line({ dim = false, children }: { dim?: boolean; children: React.ReactNode }) {
-  return (
-    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-      <span style={{ ...MONO, fontSize: '0.65rem', color: dim ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.35)', flexShrink: 0, paddingTop: '2px' }}>·</span>
-      <span style={{ ...MONO, fontSize: '0.82rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.5 }}>
-        {children}
-      </span>
-    </div>
-  );
-}
-
-function AgentLine({ role, desc, visible }: { role: string; desc: string; visible: boolean }) {
-  return (
-    <div style={{
-      display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
-      paddingLeft: '1.5rem',
-      opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(4px)',
-      transition: 'opacity 0.3s ease, transform 0.3s ease',
-    }}>
-      <span style={{ ...MONO, fontSize: '0.65rem', color: '#a78bfa', flexShrink: 0, paddingTop: '2px' }}>↳</span>
-      <span style={{ ...MONO, fontSize: '0.8rem', lineHeight: 1.5 }}>
-        <span style={{ color: '#ffffff', fontWeight: 600 }}>{role}</span>
-        <span style={{ color: 'rgba(255,255,255,0.35)' }}> — {desc}</span>
-      </span>
-    </div>
-  );
-}
+const LABEL_W = '88px';
 
 export default function ArchitecturePage() {
-  const [idx, setIdx]           = useState(0);
-  const [phase, setPhase]       = useState<Phase>('typing');
-  const [chars, setChars]       = useState(0);
-  const [agentCount, setAgentCount] = useState(0);
+  const [idx, setIdx]         = useState(0);
+  const [chars, setChars]     = useState(0);
+  const [typing, setTyping]   = useState(true);
+  const [reveal, setReveal]   = useState(0);   // how many lines shown
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const sample = SAMPLES[idx];
-  const isComplex = !!sample.agents;
+
+  // clear all pending timers
+  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = []; };
 
   // reset on new sample
   useEffect(() => {
-    setPhase('typing');
+    clearTimers();
     setChars(0);
-    setAgentCount(0);
+    setTyping(true);
+    setReveal(0);
   }, [idx]);
 
+  // typing effect
   useEffect(() => {
-    let t: ReturnType<typeof setTimeout>;
-
-    if (phase === 'typing') {
-      if (chars < sample.prompt.length) {
-        t = setTimeout(() => setChars(c => c + 1), 28);
-      } else {
-        t = setTimeout(() => setPhase('analyzing'), 400);
-      }
-    } else if (phase === 'analyzing') {
-      t = setTimeout(() => setPhase('model'), 950);
-    } else if (phase === 'model') {
-      t = setTimeout(() => setPhase('mode'), 550);
-    } else if (phase === 'mode') {
-      t = setTimeout(() => setPhase(isComplex ? 'fleet' : 'done'), 600);
-    } else if (phase === 'fleet') {
-      t = setTimeout(() => setPhase('agents'), 850);
-    } else if (phase === 'agents') {
-      const total = sample.agents?.length ?? 0;
-      if (agentCount < total) {
-        t = setTimeout(() => setAgentCount(c => c + 1), 380);
-      } else {
-        t = setTimeout(() => setPhase('done'), 3200);
-      }
-    } else if (phase === 'done') {
-      t = setTimeout(() => setIdx(i => (i + 1) % SAMPLES.length), isComplex ? 200 : 2200);
+    if (!typing) return;
+    if (chars < sample.prompt.length) {
+      const t = setTimeout(() => setChars(c => c + 1), 26);
+      return () => clearTimeout(t);
     }
+    // done typing — schedule line reveals
+    setTyping(false);
+    let acc = 0;
+    sample.lines.forEach((line, i) => {
+      acc += line.delay;
+      const t = setTimeout(() => setReveal(i + 1), acc);
+      timers.current.push(t);
+    });
+    // advance to next sample after all lines + hold
+    const holdT = setTimeout(
+      () => setIdx(n => (n + 1) % SAMPLES.length),
+      acc + sample.holdMs,
+    );
+    timers.current.push(holdT);
+    return clearTimers;
+  }, [typing, chars, sample]);
 
-    return () => clearTimeout(t);
-  }, [phase, chars, agentCount, sample, isComplex]);
+  const visibleLines = sample.lines.slice(0, reveal);
+  const lastLabel    = visibleLines.at(-1)?.label ?? '';
 
   return (
     <main style={{ position: 'relative', width: '100%', height: '100%', background: '#080808' }}>
@@ -158,128 +169,107 @@ export default function ArchitecturePage() {
 
       <div style={{
         position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none',
-        background: 'linear-gradient(180deg, rgba(8,8,8,0.88) 0%, rgba(8,8,8,0.75) 25%, rgba(8,8,8,0.0) 55%)',
+        background: 'linear-gradient(180deg, rgba(8,8,8,0.90) 0%, rgba(8,8,8,0.76) 26%, rgba(8,8,8,0.0) 58%)',
       }} />
 
       <div style={{
         position: 'absolute', inset: 0, zIndex: 10, pointerEvents: 'none',
-        display: 'flex', flexDirection: 'column',
-        padding: '80px 4% 0 4%',
+        display: 'flex', flexDirection: 'column', padding: '80px 4% 0 4%',
       }}>
         {/* Heading */}
         <h1 style={{
           fontFamily: 'var(--font-syne)', fontWeight: 800,
           fontSize: '3.8vw', lineHeight: 1.0, letterSpacing: '-0.03em',
-          color: '#ffffff', margin: 0,
+          color: '#fff', margin: 0,
         }}>
           The right model for every request.
         </h1>
 
         <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', width: '100%', marginTop: '1rem' }} />
 
-        {/* Content row */}
         <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start', marginTop: '1.75rem' }}>
-
           {/* Subtitle */}
           <p style={{
-            fontFamily: 'var(--font-fraunces)', fontWeight: 300,
-            fontSize: '0.875rem', color: 'rgba(255,255,255,0.4)',
-            lineHeight: 1.7, margin: 0, maxWidth: '22ch', flexShrink: 0,
+            fontFamily: 'var(--font-fraunces)', fontWeight: 300, fontSize: '0.875rem',
+            color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, margin: 0,
+            maxWidth: '22ch', flexShrink: 0,
           }}>
-            Optivia picks the model, the reasoning mode, and the agent configuration — all from a single API call.
+            Optivia intercepts every prompt, runs it through the full classification and routing pipeline, and dispatches the optimised master prompt to Claude Code.
           </p>
 
-          {/* Single combined terminal */}
+          {/* Terminal */}
           <div style={{
-            flex: '1 1 0',
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.09)',
-            borderRadius: '10px',
-            overflow: 'hidden',
-            transition: 'all 0.4s ease',
+            flex: '1 1 0', background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', overflow: 'hidden',
           }}>
             {/* Title bar */}
             <div style={{
               borderBottom: '1px solid rgba(255,255,255,0.07)',
-              padding: '0.5rem 1rem',
-              display: 'flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
             }}>
               {['#ff5f57','#febc2e','#28c840'].map(c => (
                 <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c, opacity: 0.7 }} />
               ))}
-              <span style={{
-                marginLeft: '0.5rem',
-                fontFamily: 'var(--font-chakra-petch)',
-                fontSize: '0.58rem', letterSpacing: '0.12em',
-                color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase',
-              }}>optivia router</span>
-
-              {/* Live model+mode badges in title bar once resolved */}
-              {(phase === 'model' || phase === 'mode' || phase === 'fleet' || phase === 'agents' || phase === 'done') && (
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                  {(phase === 'mode' || phase === 'fleet' || phase === 'agents' || phase === 'done') && (
-                    <Badge color={sample.modelBadge}>{sample.model}</Badge>
-                  )}
-                  {(phase === 'fleet' || phase === 'agents' || phase === 'done') && (
-                    <Badge color={sample.modeBadge}>{sample.mode}</Badge>
-                  )}
-                </div>
-              )}
+              <span style={{ marginLeft: '0.5rem', fontFamily: 'var(--font-chakra-petch)', fontSize: '0.58rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
+                optivia · langgraph engine
+              </span>
             </div>
 
             {/* Body */}
-            <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
 
               {/* Prompt */}
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                <span style={{ ...MONO, fontSize: '0.68rem', color: '#00A0AE', flexShrink: 0, paddingTop: '2px' }}>›</span>
-                <span style={{ ...MONO, fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
+                <span style={{ ...MONO, fontSize: '0.65rem', color: '#00A0AE', flexShrink: 0, paddingTop: '2px', width: LABEL_W, textAlign: 'right' }}>›</span>
+                <span style={{ ...MONO, fontSize: '0.88rem', color: 'rgba(255,255,255,0.88)', lineHeight: 1.5 }}>
                   {sample.prompt.slice(0, chars)}
-                  {phase === 'typing' && (
+                  {typing && (
                     <span style={{ display: 'inline-block', width: '2px', height: '1em', background: '#00A0AE', marginLeft: '1px', verticalAlign: 'text-bottom', animation: 'blink 0.75s step-end infinite' }} />
                   )}
                 </span>
               </div>
 
-              {/* Analyzing */}
-              {phase === 'analyzing' && (
-                <Line><span style={{ animation: 'pulse 1s ease-in-out infinite' }}>analyzing request···</span></Line>
-              )}
+              {/* Output lines */}
+              {visibleLines.map((line, i) => {
+                const isLast   = i === visibleLines.length - 1;
+                const isIndent = line.indent || line.label === '↳' || line.label === '?';
+                const showPulse = isLast && line.pulse;
 
-              {/* Model */}
-              {(phase === 'model' || phase === 'mode' || phase === 'fleet' || phase === 'agents' || phase === 'done') && (
-                <Line>
-                  model <Badge color={sample.modelBadge}>{sample.model}</Badge>
-                  <span style={{ color: 'rgba(255,255,255,0.3)', marginLeft: '0.5rem' }}>
-                    {sample.model === 'Haiku' ? '· fast · low cost' : sample.model === 'Sonnet' ? '· balanced quality' : '· best reasoning'}
-                  </span>
-                </Line>
-              )}
+                return (
+                  <div key={i} style={{
+                    display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
+                    paddingLeft: isIndent ? '1.5rem' : 0,
+                    opacity: 1,
+                    animation: 'fadeSlideIn 0.2s ease',
+                  }}>
+                    {/* Label */}
+                    <span style={{
+                      ...MONO, fontSize: '0.65rem', flexShrink: 0, paddingTop: '2px',
+                      width: isIndent ? 'auto' : LABEL_W,
+                      textAlign: isIndent ? 'left' : 'right',
+                      color: line.label === '?' ? '#f59e0b'
+                           : line.label === '↳' ? '#a78bfa'
+                           : 'rgba(255,255,255,0.28)',
+                    }}>
+                      {isIndent ? (line.label === '↳' ? '↳' : '?') : `${line.label}`}
+                    </span>
 
-              {/* Mode */}
-              {(phase === 'mode' || phase === 'fleet' || phase === 'agents' || phase === 'done') && (
-                <Line>
-                  mode{'  '}<Badge color={sample.modeBadge}>{sample.mode}</Badge>
-                  <span style={{ color: 'rgba(255,255,255,0.3)', marginLeft: '0.5rem' }}>
-                    {sample.mode === 'Standard' ? '· direct response' : '· extended reasoning enabled'}
-                  </span>
-                </Line>
-              )}
-
-              {/* Fleet header */}
-              {(phase === 'fleet' || phase === 'agents' || phase === 'done') && isComplex && (
-                <Line>
-                  {phase === 'fleet'
-                    ? <span style={{ animation: 'pulse 1s ease-in-out infinite' }}>configuring agent fleet···</span>
-                    : 'agent fleet ready'
-                  }
-                </Line>
-              )}
-
-              {/* Agents */}
-              {(phase === 'agents' || phase === 'done') && isComplex && sample.agents?.map((agent, i) => (
-                <AgentLine key={agent.role} role={agent.role} desc={agent.desc} visible={i < agentCount} />
-              ))}
+                    {/* Value */}
+                    <span style={{
+                      ...MONO, fontSize: '0.82rem', lineHeight: 1.5,
+                      color: line.valueColor ?? 'rgba(255,255,255,0.52)',
+                    }}>
+                      {line.highlight ? (
+                        <>
+                          <span style={{ color: line.valueColor ?? '#fff', fontWeight: 600 }}>{line.highlight}</span>
+                          {line.value.slice(line.highlight.length)}
+                        </>
+                      ) : line.value}
+                      {showPulse && <span style={{ animation: 'pulse 1s ease-in-out infinite', color: 'rgba(255,255,255,0.35)' }}> ···</span>}
+                    </span>
+                  </div>
+                );
+              })}
 
             </div>
           </div>
