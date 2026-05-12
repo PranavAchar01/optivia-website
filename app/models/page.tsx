@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import dynamic from 'next/dynamic';
 import SiteNav from '@/components/SiteNav';
 
@@ -110,12 +110,12 @@ const SAMPLES: Sample[] = [
   },
 ];
 
-// ─── component ────────────────────────────────────────────────────────────────
+// ─── sub-components ───────────────────────────────────────────────────────────
 
 const MONO: React.CSSProperties = { fontFamily: 'var(--font-geist-mono)' };
 const LABEL_W = '88px';
 
-export default function ArchitecturePage() {
+const Terminal = memo(() => {
   const [idx, setIdx]         = useState(0);
   const [chars, setChars]     = useState(0);
   const [typing, setTyping]   = useState(true);
@@ -163,11 +163,98 @@ export default function ArchitecturePage() {
   }, [typing]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleLines = sample.lines.slice(0, reveal);
-  const lastLabel    = visibleLines.at(-1)?.label ?? '';
 
   return (
+    <div style={{
+      flex: '1 1 0', background: 'rgba(255,255,255,0.03)',
+      border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', overflow: 'hidden',
+    }}>
+      {/* Title bar */}
+      <div style={{
+        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
+      }}>
+        {['#ff5f57','#febc2e','#28c840'].map(c => (
+          <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c, opacity: 0.7 }} />
+        ))}
+        <span style={{ marginLeft: '0.5rem', fontFamily: 'var(--font-chakra-petch)', fontSize: '0.58rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
+          optivia · langgraph engine
+        </span>
+      </div>
+
+      {/* Body */}
+      <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+
+        {/* Prompt */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
+          <span style={{ ...MONO, fontSize: '0.65rem', color: '#00A0AE', flexShrink: 0, paddingTop: '2px', width: LABEL_W, textAlign: 'right' }}>›</span>
+          <span style={{ ...MONO, fontSize: '0.88rem', color: 'rgba(255,255,255,0.88)', lineHeight: 1.5 }}>
+            {sample.prompt.slice(0, chars)}
+            {typing && (
+              <span style={{ display: 'inline-block', width: '2px', height: '1em', background: '#00A0AE', marginLeft: '1px', verticalAlign: 'text-bottom', animation: 'blink 0.75s step-end infinite' }} />
+            )}
+          </span>
+        </div>
+
+        {/* Output lines */}
+        {visibleLines.map((line, i) => {
+          const isLast   = i === visibleLines.length - 1;
+          const isIndent = line.indent || line.label === '↳' || line.label === '?';
+          const showPulse = isLast && line.pulse;
+
+          return (
+            <div key={i} style={{
+              display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
+              paddingLeft: isIndent ? '1.5rem' : 0,
+              opacity: 1,
+              animation: 'fadeSlideIn 0.2s ease',
+            }}>
+              {/* Label */}
+              <span style={{
+                ...MONO, fontSize: '0.65rem', flexShrink: 0, paddingTop: '2px',
+                width: isIndent ? 'auto' : LABEL_W,
+                textAlign: isIndent ? 'left' : 'right',
+                color: line.label === '?' ? '#f59e0b'
+                     : line.label === '↳' ? '#a78bfa'
+                     : 'rgba(255,255,255,0.28)',
+              }}>
+                {isIndent ? (line.label === '↳' ? '↳' : '?') : `${line.label}`}
+              </span>
+
+              {/* Value */}
+              <span style={{
+                ...MONO, fontSize: '0.82rem', lineHeight: 1.5,
+                color: line.valueColor ?? 'rgba(255,255,255,0.52)',
+              }}>
+                {line.highlight ? (
+                  <>
+                    <span style={{ color: line.valueColor ?? '#fff', fontWeight: 600 }}>{line.highlight}</span>
+                    {line.value.slice(line.highlight.length)}
+                  </>
+                ) : line.value}
+                {showPulse && <span style={{ animation: 'pulse 1s ease-in-out infinite', color: 'rgba(255,255,255,0.35)' }}> ···</span>}
+              </span>
+            </div>
+          );
+        })}
+
+      </div>
+    </div>
+  );
+});
+
+Terminal.displayName = 'Terminal';
+
+const SplineBackground = memo(() => (
+  <Spline scene="https://prod.spline.design/oZgVPSMtvgTBGXv2/scene.splinecode" />
+));
+
+SplineBackground.displayName = 'SplineBackground';
+
+export default function ArchitecturePage() {
+  return (
     <main style={{ position: 'relative', width: '100%', height: '100%', background: '#080808' }}>
-      <Spline scene="https://prod.spline.design/oZgVPSMtvgTBGXv2/scene.splinecode" />
+      <SplineBackground />
       <SiteNav />
 
       <div style={{
@@ -201,81 +288,7 @@ export default function ArchitecturePage() {
           </p>
 
           {/* Terminal */}
-          <div style={{
-            flex: '1 1 0', background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(255,255,255,0.09)', borderRadius: '10px', overflow: 'hidden',
-          }}>
-            {/* Title bar */}
-            <div style={{
-              borderBottom: '1px solid rgba(255,255,255,0.07)',
-              padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
-            }}>
-              {['#ff5f57','#febc2e','#28c840'].map(c => (
-                <div key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c, opacity: 0.7 }} />
-              ))}
-              <span style={{ marginLeft: '0.5rem', fontFamily: 'var(--font-chakra-petch)', fontSize: '0.58rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase' }}>
-                optivia · langgraph engine
-              </span>
-            </div>
-
-            {/* Body */}
-            <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-
-              {/* Prompt */}
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start', marginBottom: '0.3rem' }}>
-                <span style={{ ...MONO, fontSize: '0.65rem', color: '#00A0AE', flexShrink: 0, paddingTop: '2px', width: LABEL_W, textAlign: 'right' }}>›</span>
-                <span style={{ ...MONO, fontSize: '0.88rem', color: 'rgba(255,255,255,0.88)', lineHeight: 1.5 }}>
-                  {sample.prompt.slice(0, chars)}
-                  {typing && (
-                    <span style={{ display: 'inline-block', width: '2px', height: '1em', background: '#00A0AE', marginLeft: '1px', verticalAlign: 'text-bottom', animation: 'blink 0.75s step-end infinite' }} />
-                  )}
-                </span>
-              </div>
-
-              {/* Output lines */}
-              {visibleLines.map((line, i) => {
-                const isLast   = i === visibleLines.length - 1;
-                const isIndent = line.indent || line.label === '↳' || line.label === '?';
-                const showPulse = isLast && line.pulse;
-
-                return (
-                  <div key={i} style={{
-                    display: 'flex', gap: '0.75rem', alignItems: 'flex-start',
-                    paddingLeft: isIndent ? '1.5rem' : 0,
-                    opacity: 1,
-                    animation: 'fadeSlideIn 0.2s ease',
-                  }}>
-                    {/* Label */}
-                    <span style={{
-                      ...MONO, fontSize: '0.65rem', flexShrink: 0, paddingTop: '2px',
-                      width: isIndent ? 'auto' : LABEL_W,
-                      textAlign: isIndent ? 'left' : 'right',
-                      color: line.label === '?' ? '#f59e0b'
-                           : line.label === '↳' ? '#a78bfa'
-                           : 'rgba(255,255,255,0.28)',
-                    }}>
-                      {isIndent ? (line.label === '↳' ? '↳' : '?') : `${line.label}`}
-                    </span>
-
-                    {/* Value */}
-                    <span style={{
-                      ...MONO, fontSize: '0.82rem', lineHeight: 1.5,
-                      color: line.valueColor ?? 'rgba(255,255,255,0.52)',
-                    }}>
-                      {line.highlight ? (
-                        <>
-                          <span style={{ color: line.valueColor ?? '#fff', fontWeight: 600 }}>{line.highlight}</span>
-                          {line.value.slice(line.highlight.length)}
-                        </>
-                      ) : line.value}
-                      {showPulse && <span style={{ animation: 'pulse 1s ease-in-out infinite', color: 'rgba(255,255,255,0.35)' }}> ···</span>}
-                    </span>
-                  </div>
-                );
-              })}
-
-            </div>
-          </div>
+          <Terminal />
         </div>
       </div>
     </main>
